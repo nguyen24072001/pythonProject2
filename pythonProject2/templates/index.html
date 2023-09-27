@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LED Control</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.1/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        // Gửi trạng thái LED ON
+        function turnOn() {
+            socket.emit('led_status', 'LED ON');
+        }
+
+        // Gửi trạng thái LED OFF
+        function turnOff() {
+            socket.emit('led_status', 'LED OFF');
+        }
+
+        // Nhận trạng thái LED từ máy chủ và cập nhật trạng thái trên trang web
+        socket.on('led_status', function(data) {
+            document.getElementById('led_status').innerHTML = data;
+        });
+    </script>
+</head>
+<body>
+    <h1>LED Control</h1>
+    <button onclick="turnOn()">Turn On</button>
+    <button onclick="turnOff()">Turn Off</button>
+    <p>LED status: <span id="led_status"></span></p>
+</body>
+</html>

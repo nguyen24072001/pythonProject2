@@ -1,18 +1,19 @@
-import argparse
+# import argparse
 import cv2
 import numpy as np
+
 
 def anh_histogram(image):
     # Chuyển đổi ảnh sang ảnh grayscale
     anh_xam = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # Cân bằng lược đồ màu
+    # Cân bằng histogram tự động => Phân bổ mức xám
     anh_can_bang = cv2.equalizeHist(anh_xam)
 
     # Chuyển đổi ảnh xám thành ảnh màu
     anh_can_bang_mau = cv2.cvtColor(anh_can_bang, cv2.COLOR_GRAY2BGR)
 
-    # Tìm giá trị tối đa và tối thiểu trong ảnh cân bằng
+    # Tìm giá trị Max và Min trong ảnh cân bằng
     gia_tri_toi_thieu, gia_tri_toi_da, _, _ = cv2.minMaxLoc(anh_can_bang)
 
     # Đặt ngưỡng để lọc các pixel có độ tương phản cao hơn ngưỡng
@@ -38,7 +39,6 @@ def xac_dinh_vung_trang(anh):
 
 
 def main():
-    # Mở luồng ảnh từ camera
     cap = cv2.VideoCapture(2)
 
     while True:
@@ -53,25 +53,43 @@ def main():
         print("Thông số vùng trắng: ", vung_trang)
 
         # Trích xuất giá trị phổ từ vùng trắng
-        spectral_values = frame[vung_trang]
-        print("Giá trị phổ của vùng trắng: ", spectral_values)
+        gia_tri_pho = frame[vung_trang]
+        print("Giá trị phổ của vùng trắng: ", gia_tri_pho)
 
-        # Chuyển đổi spectral_values thành một con số ngưỡng (ví dụ: trung bình)
-        threshold_value = np.mean(spectral_values)
+        # Chuyển đổi giá trị phổ thành giá trị ngưỡng
+        threshold_value = np.mean(gia_tri_pho)
         print("Ngưỡng: ", threshold_value)
 
-        # Đèn sáng nếu ngưỡng ảnh LED_ON nằm trong khoảng 0.1 đơn vị
-        if abs(threshold_value - 228.16) < 0.3:
-            cv2.putText(frame, "Den sang", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        # Hiển thị giá trị lên frame
+        text = f"          {threshold_value:.2f}"
+        cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
 
-        # Đèn tắt nếu ngưỡng ảnh LED_OFF nằm trong khoảng 0.1 đơn vị
-        if abs(threshold_value - 177.78) < 0.3:
-            cv2.putText(frame, "Den tat", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+        # Đèn sáng nếu ngưỡng ảnh LED_ON nằm trong khoảng x đơn vị
+        if abs(threshold_value - 243) < 3:
+            cv2.putText(frame, "LED ON !", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        # Đèn tắt nếu ngưỡng ảnh LED_OFF nằm trong khoảng x đơn vị
+        if abs(threshold_value - 162) < 3:
+            cv2.putText(frame, "LED OFF !", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
         # Tạo một ảnh có cùng kích thước với khung hình gốc để hiển thị vùng trắng
         vung_trang_image = np.zeros_like(frame)
         # ADD màu xanh lá cây phân biệt vùng trắng => Đảm bảo xác định đúng
         vung_trang_image[vung_trang] = (0, 255, 0)
+
+        # Tính toán tọa độ khung vuông
+        square_center_x = frame.shape[1] // 2
+        square_center_y = frame.shape[0] // 2
+        square_size = int(frame.shape[0] * 0.8)  # Kích thước vuông x% chiều cao của frame
+
+        # Tính toán các tọa độ góc của khung vuông
+        top_left_x = square_center_x - square_size // 2
+        top_left_y = square_center_y - square_size // 2
+        bottom_right_x = square_center_x + square_size // 2
+        bottom_right_y = square_center_y + square_size // 2
+
+        # Vẽ khung vuông
+        cv2.rectangle(frame, (top_left_x, top_left_y), (bottom_right_x, bottom_right_y), (0, 165, 255), 2)
 
         # Hiển thị khung hình gốc
         cv2.imshow("Camera", frame)

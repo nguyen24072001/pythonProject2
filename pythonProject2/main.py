@@ -20,7 +20,7 @@ def main():
     # Capture an image
     ret, frame = camera.read()
     if ret:
-        cv2.imwrite("Xanh_tron_tat.jpg", frame)
+        cv2.imwrite("nguyen.jpg", frame)
         print("OK")
     else:
         print("None")

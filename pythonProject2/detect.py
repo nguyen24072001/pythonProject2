@@ -24,7 +24,7 @@ def calculate_color_percentage(image):
     return color_percentages
 
 def main():
-    image = cv2.imread("Xanh_tron.jpg")
+    image = cv2.imread("LED_OFF.jpg")
 
     color_percentages = calculate_color_percentage(image)
 

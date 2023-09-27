@@ -1,6 +1,7 @@
-import argparse
+# import argparse
 import cv2
 import numpy as np
+
 
 def anh_histogram(image):
     # Chuyển đổi ảnh sang ảnh grayscale
@@ -16,7 +17,7 @@ def anh_histogram(image):
     gia_tri_toi_thieu, gia_tri_toi_da, _, _ = cv2.minMaxLoc(anh_can_bang)
 
     # Đặt ngưỡng để lọc các pixel có độ tương phản cao hơn ngưỡng
-    nguong = gia_tri_toi_da * 0.95
+    nguong = gia_tri_toi_da * 0.93
 
     # Cắt ảnh theo phần có độ tương phản tương đối cao
     anh_cai_tien_tuong_phan = anh_can_bang_mau.copy()
@@ -39,50 +40,58 @@ def xac_dinh_vung_trang(anh):
 
 def main():
 
-#   parser = argparse.ArgumentParser(description='Đọc hình ảnh từ đường dẫn.')
-#    parser.add_argument('image_path', type=str, help='Đường dẫn tệp hình ảnh')
-#    args = parser.parse_args()
+    video = cv2.VideoCapture("CASE_BLINK_LED1.mp4")
 
-    # Đọc hình ảnh từ đường dẫn được cung cấp
-    # anh = cv2.imread(args.image_path)
-    anh = cv2.imread("LED_ON.jpg")
+    if not video.isOpened():
+        print("Failed to open the video file.")
+        return
 
-#    if anh is None:
-#        print('None')
-#    else:
-#        print('OK !')
+    while True:
+        # Đọc frame từ video
+        ret, frame = video.read()
 
-    anh_cai_tien = anh_histogram(anh)
+        # Kiểm tra nếu không thể đọc thêm frame
+        if not ret:
+            break
 
-    # cv2.imshow("Anh Goc", anh)
-    # cv2.imshow("Anh Moi", anh_cai_tien)
+        anh = frame
+        anh_cai_tien = anh_histogram(anh)
 
-    vung_trang = xac_dinh_vung_trang(anh_cai_tien)
-    print("Thông số vùng trắng: ", vung_trang)
+        vung_trang = xac_dinh_vung_trang(anh_cai_tien)
+        print("Thông số vùng trắng: ", vung_trang)
 
-    # Trích xuất giá trị phổ từ vùng trắng
-    spectral_values = anh[vung_trang]
-    print("Giá trị phổ của vùng trắng: ", spectral_values)
+        # Trích xuất giá trị phổ từ vùng trắng
+        spectral_values = anh[vung_trang]
+        print("Giá trị phổ của vùng trắng: ", spectral_values)
 
-    # Chuyển đổi spectral_values thành một con số ngưỡng (ví dụ: trung bình)
-    threshold_value = np.mean(spectral_values)
-    print("Ngưỡng: ", threshold_value)
+        # Chuyển đổi spectral_values thành một con số ngưỡng (ví dụ: trung bình)
+        threshold_value = np.mean(spectral_values)
+        print("Ngưỡng: ", threshold_value)
 
-    # Đèn sáng nếu ngưỡng ảnh LED_ON nằm trong khoảng 0.1 đơn vị
-    if abs(threshold_value - 228.16) < 0.1:
-        print("Đèn sáng")
+        # Đèn sáng nếu ngưỡng ảnh LED_ON nằm trong khoảng 0.1 đơn vị
+        if abs(threshold_value - 228.16) < 0.1:
+            print("Đèn sáng")
 
-    # Đèn tắt nếu ngưỡng ảnh LED_OFF nằm trong khoảng 0.1 đơn vị
-    if abs(threshold_value - 177.78) < 0.1:
-        print("Đèn tắt")
+        # Đèn tắt nếu ngưỡng ảnh LED_OFF nằm trong khoảng 0.1 đơn vị
+        if abs(threshold_value - 177.78) < 0.1:
+            print("Đèn tắt")
 
-    # Tạo một ảnh có cùng kích thước với ảnh gốc để hiển thị vùng trắng
-    vung_trang_image = np.zeros_like(anh)
-    # ADD màu xanh lá cây phân biệt vùng trắng => Đảm bảo xác định đúng
-    vung_trang_image[vung_trang] = (0, 255, 0)
+        # Tạo một ảnh có cùng kích thước với ảnh gốc để hiển thị vùng trắng
+        vung_trang_image = np.zeros_like(anh)
+        # ADD màu xanh lá cây phân biệt vùng trắng => Đảm bảo xác định đúng
+        vung_trang_image[vung_trang] = (0, 255, 0)
+        # Resize the image to a smaller size
+        resized_image = cv2.resize(anh, (640, 360))
+
+        # Display the resized image
+        cv2.imshow("Anh Goc", resized_image)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
     # cv2.imshow("Vung Trang", vung_trang_image)
-    cv2.waitKey(0)
+    # cv2.waitKey(0)
+    video.release()
     cv2.destroyAllWindows()
 
 

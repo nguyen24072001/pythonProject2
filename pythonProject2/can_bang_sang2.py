@@ -37,7 +37,7 @@ def xac_dinh_vung_trang(anh):
 
 
 def main():
-    anh = cv2.imread("Xanh_tron.jpg")
+    anh = cv2.imread("LED_ON.jpg")
     anh_cai_tien = anh_histogram(anh)
 
     cv2.imshow("Anh Goc", anh)
