@@ -51,11 +51,12 @@ def calculate_percentage_loss(crop_img):
 
 
 def led1(x, y, image, radius):
-
+    x1 = x
+    y1 = y
     led1_called = False
     output1 = ()  # Initialize an empty tuple
     loss5 = None
-    if abs(x - 428) < 3 and abs(y - 224) < 3:
+    if abs(x - x1) < 3 and abs(y - y1) < 3:
         led1_called = True
         output1 += (1,)  # Add the string to the tuple
         crop_img1 = image[int(y) - (radius + 2):int(y) + (radius + 2), int(x) - (radius + 2):int(x) + (radius + 2)]
@@ -410,7 +411,7 @@ def sw01_get_status(image):
         perimeter = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.04 * perimeter, True)
         sides = len(approx)
-        cv2.drawContours(image, [approx], 0, (0, 255, 0), 2)
+        # cv2.drawContours(image, [approx], 0, (0, 255, 0), 2)
 
         if sides == 3:
             shape_name = "Tam Giac"
@@ -428,7 +429,7 @@ def sw01_get_status(image):
             dem_led = dem_led + 1
 
         x, y = approx[0][0]
-        cv2.putText(image, shape_name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        # cv2.putText(image, shape_name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
         if shape_name == "Hinh Tron":
             (x, y), radius = cv2.minEnclosingCircle(approx)
@@ -436,11 +437,11 @@ def sw01_get_status(image):
             radius = int(radius)
 
             # Tô đỏ hình tròn
-            cv2.circle(image, center, radius, (0, 0, 255), 2)
+            # cv2.circle(image, center, radius, (0, 0, 255), 2)
 
             # Hiển thị tọa độ
-            cv2.putText(image, f"Toa Do: ({x:.2f}, {y:.2f})", (int(x), int(y) + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                        (0, 0, 255), 2)
+            # cv2.putText(image, f"Toa Do: ({x:.2f}, {y:.2f})", (int(x), int(y) + 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+            #             (0, 0, 255), 2)
             print(f"Toa Do: ({x:.2f}, {y:.2f})")
 
             led1_called, output1, loss5 = led1(x, y, image, radius)
