@@ -1,5 +1,9 @@
 import cv2
 import numpy as np
+import math
+import time
+import json
+import paho.mqtt.client as mqtt
 from paho.mqtt import publish
 
 MQTT_SERVER = "localhost"
@@ -9,6 +13,21 @@ message_id = 0
 MQTT_TOPIC = "ON_ON"
 MQTT_TOPIC2 = "ON_OFF"
 MQTT_TOPIC3 = "OFF"
+MQTT_TOPIC4 = "SUM_BLINK"
+MQTT_TOPIC5 = "get_status"
+MQTT_TOPIC_CALL = "call_get_status"
+
+start_time = time.time()
+frame_count = 0
+threshold_time_total = 0
+threshold_count = 0
+previous_threshold_value = None
+total_threshold_diff = 0
+previous_total_threshold_diff = 0
+previous_total_threshold_diff_time = None
+dem_duong = 0
+dem_am = 0
+blink = 0
 
 
 def anh_histogram(image):
@@ -396,7 +415,34 @@ def led4_4(x, y, image, radius):
     return led4_4_called, output4
 
 
+active_on = ""
+active_off = ""
+shut_down = ""
+
+latest_status = ""
+
+
+def on_connect(client, userdata, flags, rc):
+    print('Đã kết nối với mã kết quả: ' + str(rc))
+    client.subscribe(MQTT_TOPIC5)
+    client.subscribe(MQTT_TOPIC_CALL)
+
+
+def on_message(client, userdata, msg):
+    global latest_status
+    text_sum = "hello"
+    latest_status = {
+        "text_sum": text_sum
+    }
+    if msg.topic == MQTT_TOPIC_CALL and msg.payload == b'call1':
+        publish.single(MQTT_TOPIC_CALL, payload=json.dumps(latest_status), hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
+
+
 def sw01_get_status(image):
+    global active_on
+    global active_off
+    global shut_down
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edges = cv2.Canny(blurred, 50, 150)
@@ -406,7 +452,7 @@ def sw01_get_status(image):
     check_led_on = 0
 
     led_results = [f"{1}"]
-
+    ketqua = None
     for contour in contours:
         perimeter = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.04 * perimeter, True)
@@ -446,20 +492,63 @@ def sw01_get_status(image):
 
             led1_called, output1, loss5 = led1(x, y, image, radius)
             print(loss5)
+
             if led1_called:
+
                 check_led_on += 1
                 status = output1[0]  # "Công tắc 1"
+
+                # payload 1
                 value = output1[1]  # 1 or 2
+
+                if value == 2:
+                    ketqua = 2
+                    print("ok on")
+                elif value == 1:
+                    ketqua = 1
+                    print("ok off")
                 led_results.append(f"{int(status)}:{int(value)}")
 
     if check_led_on == 0:
+        # payload 1
         led_results.append(f"{1}:{0}")
+        ketqua = 0
+        print("off all")
         publish.single(MQTT_TOPIC3, payload=0, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
 
     # print("Số lượng:", dem_led)
     led_results.append(f"{int(dem_led)}")
 
     print(" ".join(led_results))
+    print("final", ketqua)
+    if ketqua == 2:
+        active_on = "OK"
+    else:
+        active_on = "NONE"
+    if ketqua == 1:
+        active_off = "OK"
+    else:
+        active_off = "NONE"
+    if ketqua == 0:
+        shut_down = "OK"
+    else:
+        shut_down = "NONE"
+
+    text_sum = json.dumps({
+        "LED_ON": active_on,
+        "LED_OFF": active_off,
+        "OFF": shut_down
+    })
+    publish.single(MQTT_TOPIC5, payload=text_sum, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
+
+
+client = mqtt.Client()
+client.on_connect = on_connect
+client.on_message = on_message
+client.connect('localhost', 1883, 60)
+
+# Start the MQTT client loop
+client.loop_start()
 
 
 def sw02_get_status(image):
@@ -709,3 +798,105 @@ def sw04_get_status(image):
     # print("Số lượng:", dem_led)
     led_results.append(f"{int(dem_led)}")
     print(" ".join(led_results))
+
+
+def blink_led1(anh):
+    global threshold_time_total
+    global threshold_count
+    global previous_threshold_value
+    global dem_duong
+    global dem_am
+    global total_threshold_diff
+    global previous_total_threshold_diff
+    global previous_total_threshold_diff_time
+    global blink
+    global frame_count
+    percentage_loss = abs(calculate_percentage_loss(anh)) / 1000
+    # Tính giá trị ngưỡng
+    start_threshold_time = time.time()
+    end_threshold_time = time.time()
+    threshold_time_ms = (end_threshold_time - start_threshold_time) * 1000
+    # print("Loss 1: {}".format(abs(percentage_loss) / 1000))
+    # print("Thời gian tính ngưỡng (ms): ", threshold_time_ms)
+    print("loss test", percentage_loss * 2)
+    threshold_time_total += threshold_time_ms
+
+    if percentage_loss > 45:
+        threshold_count += 1
+
+    # Tính tổng số lần mà giá trị ngưỡng hiện tại trừ giá trị ngưỡng trước đó lớn hơn 50
+    if previous_threshold_value is not None:
+        threshold_diff = percentage_loss - previous_threshold_value
+        if abs(threshold_diff) <= 7:
+            print("+")
+            dem_duong = dem_duong + 1
+            total_threshold_diff += 1
+            if total_threshold_diff - previous_total_threshold_diff == 1:
+                if previous_total_threshold_diff_time is not None:
+                    current_time = time.time()
+                    time_diff = (current_time - previous_total_threshold_diff_time)
+                    print("Khoảng thời gian (s) nháy {} lần và {} lần:".format(total_threshold_diff - 1,
+                                                                               total_threshold_diff), time_diff)
+
+                previous_total_threshold_diff_time = time.time()
+        else:
+            print("-")
+            dem_am = dem_am + 1
+    previous_threshold_value = percentage_loss
+    previous_total_threshold_diff = total_threshold_diff
+    print("LED Đã Nháy {} Lần !".format(total_threshold_diff))
+    print("dem duong", dem_duong)
+    cv2.putText(
+        anh,
+        f"                TIME OUT:{dem_duong / 23:.2f}",
+        (10, 30),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0, 255, 0),
+        2
+    )
+    if dem_duong > 200:
+        print("dem am", dem_am)
+        cv2.putText(
+            anh,
+            f"                           -:{dem_am}",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 255, 0),
+            2
+        )
+        if dem_am != 0:
+            blink = blink + 1
+            ket_qua = math.ceil((dem_am - 2) / 2)
+            publish.single(MQTT_TOPIC4, payload=ket_qua, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
+        dem_duong = 0
+        dem_am = 0
+        # blink = 0
+    # dem_am 8 => 10
+    # Tính FPS và hiển thị lên frame
+    frame_count += 1
+    elapsed_time = time.time() - start_time
+    fps = frame_count / elapsed_time
+    cv2.putText(
+        anh,
+        f"FPS: {fps:.2f}",
+        (10, 30),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0, 255, 0),
+        2
+    )
+
+    current_frame_time = time.time()
+    time_diff = current_frame_time - start_time
+    print("time = {:.2f}".format(time_diff))
+    cv2.putText(
+        anh,
+        f"Time: {time_diff:.2f}s",
+        (10, 60),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        1,
+        (0, 255, 0),
+        2
+    )
