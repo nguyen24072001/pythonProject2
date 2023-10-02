@@ -428,16 +428,6 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(MQTT_TOPIC_CALL)
 
 
-def on_message(client, userdata, msg):
-    global latest_status
-    text_sum = "hello"
-    latest_status = {
-        "text_sum": text_sum
-    }
-    if msg.topic == MQTT_TOPIC_CALL and msg.payload == b'call1':
-        publish.single(MQTT_TOPIC_CALL, payload=json.dumps(latest_status), hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
-
-
 def sw01_get_status(image):
     global active_on
     global active_off
@@ -540,11 +530,13 @@ def sw01_get_status(image):
         "OFF": shut_down
     })
     publish.single(MQTT_TOPIC5, payload=text_sum, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
+    return text_sum
+
 
 
 client = mqtt.Client()
 client.on_connect = on_connect
-client.on_message = on_message
+
 client.connect('localhost', 1883, 60)
 
 # Start the MQTT client loop
@@ -800,8 +792,11 @@ def sw04_get_status(image):
     print(" ".join(led_results))
 
 
+sum_blink = ""
+
+
 def blink_led1(anh):
-    global threshold_time_total
+    global threshold_time_total, sum_blink
     global threshold_count
     global previous_threshold_value
     global dem_duong
@@ -857,19 +852,11 @@ def blink_led1(anh):
     )
     if dem_duong > 200:
         print("dem am", dem_am)
-        cv2.putText(
-            anh,
-            f"                           -:{dem_am}",
-            (10, 30),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (0, 255, 0),
-            2
-        )
+
         if dem_am != 0:
             blink = blink + 1
-            ket_qua = math.ceil((dem_am - 2) / 2)
-            publish.single(MQTT_TOPIC4, payload=ket_qua, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
+            sum_blink = math.ceil((dem_am - 2) / 2)
+            publish.single(MQTT_TOPIC4, payload=sum_blink, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
         dem_duong = 0
         dem_am = 0
         # blink = 0
@@ -900,3 +887,12 @@ def blink_led1(anh):
         (0, 255, 0),
         2
     )
+    if sum_blink == 0:
+        blink_total = "NONE"
+    else:
+        blink_total = sum_blink
+
+    blink_sum = json.dumps({
+        "TOTAL": blink_total
+    })
+    return blink_sum
