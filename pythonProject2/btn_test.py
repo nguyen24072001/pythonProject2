@@ -16,6 +16,7 @@ MQTT_TOPIC3 = "OFF"
 MQTT_TOPIC4 = "SUM_BLINK"
 MQTT_TOPIC5 = "get_status"
 MQTT_TOPIC_CALL = "call_get_status"
+MQTT_TOPIC_CONTROL = "control"
 
 start_time = time.time()
 frame_count = 0
@@ -35,7 +36,7 @@ def anh_histogram(image):
     anh_can_bang = cv2.equalizeHist(anh_xam)
     anh_can_bang_mau = cv2.cvtColor(anh_can_bang, cv2.COLOR_GRAY2BGR)
     gia_tri_toi_thieu, gia_tri_toi_da, _, _ = cv2.minMaxLoc(anh_can_bang)
-    nguong = gia_tri_toi_da * 0.95
+    nguong = gia_tri_toi_da * 0.995
     anh_cai_tien_tuong_phan = anh_can_bang_mau.copy()
     anh_cai_tien_tuong_phan[anh_can_bang_mau < nguong] = 0
     return anh_cai_tien_tuong_phan
@@ -81,22 +82,22 @@ def led1(x, y, image, radius):
         crop_img1 = image[int(y) - (radius + 2):int(y) + (radius + 2), int(x) - (radius + 2):int(x) + (radius + 2)]
         # LOSS
         percentage_loss = calculate_percentage_loss(crop_img1)
-
-        # print("Loss 1: {:.2f}%".format(abs(percentage_loss) / 1000))
+        new_nguong = tinh_nguong(crop_img1)
+        print("Loss 1: {:.2f}%".format(abs(percentage_loss) / 1000))
         loss5 = abs(percentage_loss) / 1000
 
-        crop_img1 = cv2.putText(crop_img1, "1", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
-        crop_img1 = cv2.putText(crop_img1, "{:.2f}".format(percentage_loss), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1,
+        # crop_img1 = cv2.putText(crop_img1, "1", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+        crop_img1 = cv2.putText(crop_img1, "{}".format(new_nguong), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1,
                                 (0, 165, 255), 2)
 
-        if abs(percentage_loss) / 1000 - 40 > 5:
+        if new_nguong - 207 < 10:
             publish.single(MQTT_TOPIC, payload=2, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
-            output1 += (2,)  # Add the value 2 to the tuple
-            crop_img1 = cv2.putText(crop_img1, "  ON", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
-        elif abs(percentage_loss) / 1000 - 30 < 15:
+            output1 += (1,)  # Add the value 2 to the tuple
+            crop_img1 = cv2.putText(crop_img1, "OFF", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+        elif new_nguong - 245 < 10:
             publish.single(MQTT_TOPIC2, payload=1, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
-            output1 += (1,)  # Add the value 1 to the tuple
-            crop_img1 = cv2.putText(crop_img1, "  OFF", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            output1 += (2,)  # Add the value 1 to the tuple
+            crop_img1 = cv2.putText(crop_img1, "ON", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
 
         # Detect color and add it to the tuple
         output1 += (crop_img1,)  # Add the modified image to the tuple
@@ -426,6 +427,22 @@ def on_connect(client, userdata, flags, rc):
     print('Đã kết nối với mã kết quả: ' + str(rc))
     client.subscribe(MQTT_TOPIC5)
     client.subscribe(MQTT_TOPIC_CALL)
+    client.subscribe(MQTT_TOPIC_CONTROL)
+
+
+def on_message(client, userdata, msg):
+    print("hello")
+#     global dem_duong, dem_am
+#     if msg.topic == topic_camera_blink_receive and msg.payload == b'start':
+#         dem_am = 0
+#         dem_duong = 0
+
+
+def ClearCounter():
+    global  dem_am, dem_duong
+    dem_am = 0
+    dem_duong = 0
+
 
 
 def sw01_get_status(image):
@@ -447,19 +464,11 @@ def sw01_get_status(image):
         perimeter = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.04 * perimeter, True)
         sides = len(approx)
-        # cv2.drawContours(image, [approx], 0, (0, 255, 0), 2)
+        # if sides > 7:
+            # cv2.drawContours(image, [approx], 0, (0, 255, 0), 2)
 
         if sides == 3:
             shape_name = "Tam Giac"
-        elif sides == 4:
-            x, y, w, h = cv2.boundingRect(approx)
-            aspect_ratio = float(w) / h
-            if 0.95 <= aspect_ratio <= 1.05:
-                shape_name = "Hinh Vuong"
-            else:
-                shape_name = "Hinh Chu Nhat"
-        elif sides == 5:
-            shape_name = "Ngu Giac"
         else:
             shape_name = "Hinh Tron"
             dem_led = dem_led + 1
@@ -525,17 +534,16 @@ def sw01_get_status(image):
         shut_down = "NONE"
 
     text_sum = json.dumps({
-        "LED_ON": active_on,
-        "LED_OFF": active_off,
-        "OFF": shut_down
+        "ket qua" : ketqua
     })
     publish.single(MQTT_TOPIC5, payload=text_sum, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
-    return text_sum
+    return str(ketqua)
 
 
 
 client = mqtt.Client()
 client.on_connect = on_connect
+client.on_message = on_message
 
 client.connect('localhost', 1883, 60)
 
@@ -822,7 +830,8 @@ def blink_led1(anh):
     # Tính tổng số lần mà giá trị ngưỡng hiện tại trừ giá trị ngưỡng trước đó lớn hơn 50
     if previous_threshold_value is not None:
         threshold_diff = percentage_loss - previous_threshold_value
-        if abs(threshold_diff) <= 7:
+        print("VALUE", threshold_diff)
+        if abs(threshold_diff) <= 7.5:
             print("+")
             dem_duong = dem_duong + 1
             total_threshold_diff += 1
@@ -841,24 +850,21 @@ def blink_led1(anh):
     previous_total_threshold_diff = total_threshold_diff
     print("LED Đã Nháy {} Lần !".format(total_threshold_diff))
     print("dem duong", dem_duong)
-    cv2.putText(
-        anh,
-        f"                TIME OUT:{dem_duong / 23:.2f}",
-        (10, 30),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        1,
-        (0, 255, 0),
-        2
-    )
-    if dem_duong > 200:
-        print("dem am", dem_am)
+    # cv2.putText(
+      #   anh,
+        # f"                TIME TEST:{dem_duong / 23:.2f}",
+        # (10, 30),
+        # cv2.FONT_HERSHEY_SIMPLEX,
+        # 1,
+        # (0, 255, 0),
+        # 2
+    # )
+    sum_blink = math.ceil((dem_am - 1) / 2)
+    publish.single(MQTT_TOPIC4, payload=sum_blink, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
 
-        if dem_am != 0:
-            blink = blink + 1
-            sum_blink = math.ceil((dem_am - 2) / 2)
-            publish.single(MQTT_TOPIC4, payload=sum_blink, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
-        dem_duong = 0
-        dem_am = 0
+
+        # dem_duong = 0
+        # dem_am = 0
         # blink = 0
     # dem_am 8 => 10
     # Tính FPS và hiển thị lên frame
@@ -887,12 +893,12 @@ def blink_led1(anh):
         (0, 255, 0),
         2
     )
-    if sum_blink == 0:
-        blink_total = "NONE"
-    else:
-        blink_total = sum_blink
-
-    blink_sum = json.dumps({
-        "TOTAL": blink_total
-    })
-    return blink_sum
+    # if sum_blink == 0:
+    #     blink_total = "NONE"
+    # else:
+    #     blink_total = sum_blink
+    blink_total = sum_blink
+    # blink_sum = json.dumps({
+    #     "TOTAL": blink_total
+    # })
+    return str(blink_total)

@@ -3,7 +3,7 @@ import cv2
 
 def repeat_video(input_file, output_file, repeat_count):
     # Mở video đầu vào
-    video = cv2.VideoCapture(input_file)
+    video = cv2.VideoCapture(2)
     if not video.isOpened():
         print("Failed to open the video file.")
         return
@@ -40,4 +40,4 @@ def repeat_video(input_file, output_file, repeat_count):
 
 
 # Thực hiện lặp lại video 3 lần và lưu vào file mới
-repeat_video("CASE_BLINK_LED1.mp4", "CASE_BLINK_LED1v3.mp4", 3)
+repeat_video("CASE_BLINK_LED1.mp4", "CASE_CO_SANG.mp4", 3)

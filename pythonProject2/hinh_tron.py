@@ -1,7 +1,7 @@
 import cv2
 
 # Đọc ảnh đầu vào
-image = cv2.imread("LED_ON.jpg")
+image = cv2.imread("error.jpg")
 
 # Chuyển đổi ảnh thành ảnh grayscale
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -27,24 +27,15 @@ for contour in contours:
     # Xác định số đỉnh của hình dạng
     sides = len(approx)
 
+
     # Vẽ hình bao quanh contour
-    cv2.drawContours(image, [approx], 0, (0, 255, 0), 2)
+    if sides > 7:
+        cv2.drawContours(image, [approx], 0, (0, 255, 0), 2)
 
     # Xác định tên hình dạng dựa trên số đỉnh
     shape_name = ""
     if sides == 3:
         shape_name = "Tam Giac"
-    elif sides == 4:
-        x, y, w, h = cv2.boundingRect(approx)
-        aspect_ratio = float(w) / h
-        if 0.95 <= aspect_ratio <= 1.05:
-            shape_name = "Hinh Vuong"
-        else:
-            shape_name = "Hinh Chu Nhat"
-    elif sides == 5:
-        shape_name = "Ngu Giac"
-    elif sides == 6:
-        shape_name = "Luc Giac"
     else:
         shape_name = "hinh tron"
         dem_led = dem_led + 1
@@ -53,7 +44,7 @@ for contour in contours:
     x, y = approx[0][0]
     cv2.putText(image, shape_name, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-    if shape_name == "hinh tron":
+    if shape_name == "hinh tron" and sides > 7:
         # Tìm tâm và bán kính của hình tròn
         (x, y), radius = cv2.minEnclosingCircle(approx)
         center = (int(x), int(y))

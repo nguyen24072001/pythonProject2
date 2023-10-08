@@ -17,7 +17,7 @@ def anh_histogram(image):
     gia_tri_toi_thieu, gia_tri_toi_da, _, _ = cv2.minMaxLoc(anh_can_bang)
 
     # Đặt ngưỡng để lọc các pixel có độ tương phản cao hơn ngưỡng
-    nguong = gia_tri_toi_da * 0.93
+    nguong = gia_tri_toi_da * 0.8
 
     # Cắt ảnh theo phần có độ tương phản tương đối cao
     anh_cai_tien_tuong_phan = anh_can_bang_mau.copy()
@@ -40,8 +40,8 @@ def xac_dinh_vung_trang(anh):
 
 def main():
 
-    video = cv2.VideoCapture("CASE_BLINK_LED1.mp4")
-
+    # video = cv2.VideoCapture("CASE_BLINK_LED1.mp4")
+    video = cv2.VideoCapture(2)
     if not video.isOpened():
         print("Failed to open the video file.")
         return
@@ -81,15 +81,15 @@ def main():
         # ADD màu xanh lá cây phân biệt vùng trắng => Đảm bảo xác định đúng
         vung_trang_image[vung_trang] = (0, 255, 0)
         # Resize the image to a smaller size
-        resized_image = cv2.resize(anh, (640, 360))
-
+        # resized_image = cv2.resize(anh, (640, 360))
         # Display the resized image
-        cv2.imshow("Anh Goc", resized_image)
-
+        # cv2.imshow("Anh Goc", resized_image)
+        cv2.imshow("Anh Goc", anh)
+        cv2.imshow("Vung Trang", vung_trang_image)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-    # cv2.imshow("Vung Trang", vung_trang_image)
+
     # cv2.waitKey(0)
     video.release()
     cv2.destroyAllWindows()

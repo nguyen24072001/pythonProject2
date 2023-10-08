@@ -10,20 +10,19 @@ def main():
         if not ret:
             print("Failed to capture frame")
             break
-
-        cv2.imshow("Camera Test", frame)
-
+        # Thiết lập kích thước hình vuông
+        x = 300  # Chiều dài hình vuông
+        y = 300  # Chiều rộng hình vuông
+        # Tính toán vị trí của hình vuông
+        top_left = (250, 0)
+        bottom_right = (top_left[0] + x, top_left[1] + y)
+        # cv2.rectangle(frame, top_left, bottom_right, (0, 255, 0), 2)
+        cropped_frame = frame[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
+        #
+        cv2.imshow("Camera Test", cropped_frame)
+        # cv2.imshow("Camera Test", frame)
         if cv2.waitKey(1) == ord('q'):
             break
-    # Sau 2s thi chup anh
-    time.sleep(2)
-    # Capture an image
-    ret, frame = camera.read()
-    if ret:
-        cv2.imwrite("nguyen.jpg", frame)
-        print("OK")
-    else:
-        print("None")
 
     camera.release()
     cv2.destroyAllWindows()
