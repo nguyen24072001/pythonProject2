@@ -110,7 +110,7 @@ def detect_and_draw_circles(image):
                 else:
                     print(f"Trạng thái LED {led_text}: Không xác định được")
 
-                cv2.imshow(f"Cropped LED {led_text}", cropped_img)
+                # cv2.imshow(f"Cropped LED {led_text}", cropped_img)
 
     return image
 

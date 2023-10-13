@@ -3,7 +3,7 @@ import time
 
 
 def main():
-    camera = cv2.VideoCapture(3)
+    camera = cv2.VideoCapture(2)
 
     while True:
         ret, frame = camera.read()

@@ -17,7 +17,7 @@ def anh_histogram(image):
     gia_tri_toi_thieu, gia_tri_toi_da, _, _ = cv2.minMaxLoc(anh_can_bang)
 
     # Đặt ngưỡng để lọc các pixel có độ tương phản cao hơn ngưỡng
-    nguong = gia_tri_toi_da * 0.8
+    nguong = gia_tri_toi_da * 0.98
 
     # Cắt ảnh theo phần có độ tương phản tương đối cao
     anh_cai_tien_tuong_phan = anh_can_bang_mau.copy()
@@ -37,6 +37,33 @@ def xac_dinh_vung_trang(anh):
     vung_trang = np.where(anh_nhi_phan == 255)
     return vung_trang
 
+def circle_detection(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=1, maxRadius=200)
+    if detected_circles is not None:
+        detected_circles = np.uint16(np.around(detected_circles))
+        for pt in detected_circles[0, :]:
+            a, b, r = pt[0], pt[1], pt[2]
+            img, point = calculator_color(img, gray, a, b, r)
+            print(point)
+
+    return img
+
+
+def calculator_color(img, gray, a, b, r):
+    points = []
+    for r in range(r - 3, r + 3, 1):
+        for x in range(a - r, a + r, 1):
+            y = int(-(r ** 2 - (x - a) ** 2) ** 0.5 + b)
+            points.append(gray[y, x])
+            cv2.rectangle(img, (x, y), (x, y), (0, 0, 255), 2)
+
+        for x in range(a - r, a + r, 1):
+            y = int((r ** 2 - (x - a) ** 2) ** 0.5 + b)
+            points.append(gray[y, x])
+            cv2.rectangle(img, (x, y), (x, y), (0, 0, 255), 2)
+
+    return img, int(sum(points)/len(points))
 
 def main():
 
@@ -80,6 +107,7 @@ def main():
         vung_trang_image = np.zeros_like(anh)
         # ADD màu xanh lá cây phân biệt vùng trắng => Đảm bảo xác định đúng
         vung_trang_image[vung_trang] = (0, 255, 0)
+        circle_detection(vung_trang_image)
         # Resize the image to a smaller size
         # resized_image = cv2.resize(anh, (640, 360))
         # Display the resized image
