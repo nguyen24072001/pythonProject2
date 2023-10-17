@@ -1,159 +1,227 @@
-# import argparse
 import cv2
 import numpy as np
 
 
-def anh_histogram(image):
-    # Chuyển đổi ảnh sang ảnh grayscale
-    anh_xam = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+def led1(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
+                                        maxRadius=40)
 
-    # Cân bằng lược đồ màu
-    anh_can_bang = cv2.equalizeHist(anh_xam)
+    if detected_circles is not None:
+        detected_circles = np.uint16(np.around(detected_circles))
 
-    # Chuyển đổi ảnh xám thành ảnh màu
-    anh_can_bang_mau = cv2.cvtColor(anh_can_bang, cv2.COLOR_GRAY2BGR)
+        for pt in detected_circles[0, :]:
+            a, b, r = pt[0], pt[1], pt[2]
 
-    # Tìm giá trị tối đa và tối thiểu trong ảnh cân bằng
-    gia_tri_toi_thieu, gia_tri_toi_da, _, _ = cv2.minMaxLoc(anh_can_bang)
+            img, point = calculator_color(img, gray, a, b, r)
+            print("point 1 =", point)
 
-    # Đặt ngưỡng để lọc các pixel có độ tương phản cao hơn ngưỡng
-    nguong = gia_tri_toi_da * 0.85
-
-    # Cắt ảnh theo phần có độ tương phản tương đối cao
-    anh_cai_tien_tuong_phan = anh_can_bang_mau.copy()
-    anh_cai_tien_tuong_phan[anh_can_bang_mau < nguong] = 0
-
-    return anh_cai_tien_tuong_phan
+    return img
 
 
-def xac_dinh_vung_trang(anh):
-    # Chuyển đổi ảnh sang ảnh grayscale
-    anh_xam = cv2.cvtColor(anh, cv2.COLOR_BGR2GRAY)
+def led2(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
+                                        maxRadius=40)
 
-    # Áp dụng phép toán nhị phân hóa để chuyển đổi ảnh sang dạng nhị phân
-    _, anh_nhi_phan = cv2.threshold(anh_xam, 0, 255, cv2.THRESH_BINARY)
+    if detected_circles is not None:
+        detected_circles = np.uint16(np.around(detected_circles))
 
-    # Tìm các vị trí có giá trị pixel là màu trắng
-    vung_trang = np.where(anh_nhi_phan == 255)
-    return vung_trang
+        for pt in detected_circles[0, :]:
+            a, b, r = pt[0], pt[1], pt[2]
+
+            img, point = calculator_color(img, gray, a, b, r)
+            print("point 2 =", point)
+
+    return img
 
 
-led_text = ""
+def led3(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
+                                        maxRadius=40)
+
+    if detected_circles is not None:
+        detected_circles = np.uint16(np.around(detected_circles))
+
+        for pt in detected_circles[0, :]:
+            a, b, r = pt[0], pt[1], pt[2]
+
+            img, point = calculator_color(img, gray, a, b, r)
+            print("point 3 =", point)
+
+    return img
 
 
-def detect_and_draw_circles(image):
-    global led_text
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray_blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    circles = cv2.HoughCircles(gray_blur, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=0, maxRadius=0)
+def led4(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
+                                        maxRadius=40)
 
-    if circles is not None:
-        circles = np.round(circles[0, :]).astype(int)
+    if detected_circles is not None:
+        detected_circles = np.uint16(np.around(detected_circles))
 
-        if len(circles) >= 4:
-            points = circles[:4, :2]  # Lấy tọa độ 4 điểm đầu tiên
-            for i, (x, y, r) in enumerate(circles):
-                # cv2.circle(image, (x, y), r, (0, 0, 255), 3)
-                cv2.circle(image, (x, y), 2, (255, 0, 0), 3, cv2.LINE_AA)
+        for pt in detected_circles[0, :]:
+            a, b, r = pt[0], pt[1], pt[2]
 
-            # Vẽ 4 đường thẳng màu vàng nối 4 điểm
-            # cv2.line(image, tuple(points[0]), tuple(points[1]), (0, 255, 255), 2)
-            # cv2.line(image, tuple(points[1]), tuple(points[2]), (0, 255, 255), 2)
-            # cv2.line(image, tuple(points[2]), tuple(points[3]), (0, 255, 255), 2)
-            # cv2.line(image, tuple(points[3]), tuple(points[0]), (0, 255, 255), 2)
+            img, point = calculator_color(img, gray, a, b, r)
+            print("point 4 =", point)
 
-            # Tìm giao điểm cách đều 4 chấm xanh dương
-            average_point = np.mean(points, axis=0).astype(int)
-            # cv2.circle(image, tuple(average_point), 5, (255, 0, 255), -1)
+    return img
 
-            # Thiết lập tọa độ Oxy dựa vào tâm
-            relative_points = points - average_point
 
-            # Hiển thị tọa độ của cả 4 chấm xanh dương và văn bản LED tương ứng
-            for i, (x, y) in enumerate(relative_points):
-                text = f"({x}, {y})"
-                # cv2.putText(image, text, tuple(points[i]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2, cv2.LINE_AA)
+def crop_image_case1(img, a, b, square_length):
+    x1 = a - square_length // 2
+    y1 = b - square_length // 2
+    x2 = a + square_length // 2
+    y2 = b + square_length // 2
+    cropped_img = img[y1:y2, x1:x2]
+    return cropped_img
 
-                if x < 0 < y:
-                    led_text = "1"
-                elif x < 0 and y < 0:
-                    led_text = "2"
-                elif x > 0 and y > 0:
-                    led_text = "3"
-                elif x > 0 > y:
-                    led_text = "4"
 
-                cv2.putText(image, led_text, tuple(points[i]), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 2,
-                            cv2.LINE_AA)
+def crop_image_case2(img, a, b, square_length):
+    x1 = a - square_length // 2
+    y1 = b - square_length // 2
+    x2 = a + square_length // 2
+    y2 = b + square_length // 2
+    cropped_img = img[y1:y2, x1:x2]
+    return cropped_img
 
-                # Cắt ảnh gốc từ tâm của từng tọa độ LED
-                radius = circles[i][2]
-                diameter = 2 * radius
-                center = tuple(circles[i][:2])
-                x1 = center[0] - radius - 5
-                y1 = center[1] - radius - 5
-                x2 = center[0] + radius + 5
-                y2 = center[1] + radius + 5
-                cropped_img = image[y1:y2, x1:x2]
-                # In số lượng pixel vùng trắng của ảnh cắt
-                white_pixels = np.sum(cropped_img == [255, 255, 255])
-                print(f"Số lượng pixel vùng trắng của ảnh cắt {led_text}: {white_pixels}")
 
-                if white_pixels < 800:
-                    print(f"Trạng thái LED {led_text}: OFF")
-                    cv2.putText(image, "OFF", tuple(points[i]), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 2,
-                                cv2.LINE_AA)
-                elif white_pixels > 900:
-                    print(f"Trạng thái LED {led_text}: ON")
-                    cv2.putText(image, "ON", tuple(points[i]), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 165, 255), 2,
-                                cv2.LINE_AA)
-                else:
-                    print(f"Trạng thái LED {led_text}: Không xác định được")
+def crop_image_case3(img, a, b, square_length):
+    x1 = a - square_length // 2
+    y1 = b - square_length // 2
+    x2 = a + square_length // 2
+    y2 = b + square_length // 2
+    cropped_img = img[y1:y2, x1:x2]
+    return cropped_img
 
-                # cv2.imshow(f"Cropped LED {led_text}", cropped_img)
 
-    return image
+def crop_image_case4(img, a, b, square_length):
+    x1 = a - square_length // 2
+    y1 = b - square_length // 2
+    x2 = a + square_length // 2
+    y2 = b + square_length // 2
+    cropped_img = img[y1:y2, x1:x2]
+    return cropped_img
+
+
+def circle_detection(img):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
+                                        maxRadius=40)
+
+    if detected_circles is not None:
+        detected_circles = np.uint16(np.around(detected_circles))
+
+        for pt in detected_circles[0, :]:
+            a, b, r = pt[0], pt[1], pt[2]
+            # center = (a, b)
+
+            # Hiển thị tọa độ tâm
+            # text = "({}, {})".format(a, b)
+            # cv2.putText(img, text, (a, b), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            # Vẽ chấm xanh dương
+            # cv2.circle(img, center, 2, (255, 0, 0), -1)
+
+            # Nguong
+            img, point = calculator_color(img, gray, a, b, r)
+            # print("point = ", point)
+            save_center_values(a, b)
+    return img
+
+
+min_a = float('inf')  # Initialize min_a with infinity
+min_b = float('inf')  # Initialize min_b with infinity
+max_a = float('-inf')  # Initialize max_a with negative infinity
+max_b = float('-inf')  # Initialize max_b with negative infinity
+
+
+def save_center_values(a, b):
+    global min_a, min_b, max_a, max_b
+
+    # Update the minimum values if necessary
+    if a < min_a:
+        min_a = a
+    if b < min_b:
+        min_b = b
+
+    # Update the maximum values if necessary
+    if a > max_a:
+        max_a = a
+    if b > max_b:
+        max_b = b
+
+
+def calculator_color(img, gray, a, b, r):
+    points = []
+    for r in range(r - 3, r, 1):
+        for x in range(a - r, a + r, 1):
+            y = int(-(r ** 2 - (x - a) ** 2) ** 0.5 + b)
+            points.append(gray[y, x])
+            # cv2.rectangle(img, (x, y), (x, y), (0, 0, 255), 1)
+
+        for x in range(a - r, a + r, 1):
+            y = int((r ** 2 - (x - a) ** 2) ** 0.5 + b)
+            points.append(gray[y, x])
+            # cv2.rectangle(img, (x, y), (x, y), (0, 0, 255), 1)
+
+    return img, int(sum(points)/len(points))
 
 
 def main():
-
-    # video = cv2.VideoCapture("CASE_BLINK_LED1.mp4")
-    video = cv2.VideoCapture(2)
+    video = cv2.VideoCapture("demo_gray.mp4")
     if not video.isOpened():
         print("Failed to open the video file.")
         return
 
+    save_images = False
+    frame_count = 0
+
     while True:
-        # Đọc frame từ video
         ret, frame = video.read()
 
-        # Kiểm tra nếu không thể đọc thêm frame
         if not ret:
             break
 
-        anh = frame
-        anh_cai_tien = anh_histogram(anh)
+        anh_xam = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        anh_tron = circle_detection(frame)
 
-        vung_trang = xac_dinh_vung_trang(anh_cai_tien)
-        # print("Thông số vùng trắng: ", vung_trang)
+        anh1 = crop_image_case1(frame, max_a, max_b, 90)
+        anh2 = crop_image_case2(frame, min_a, max_b, 90)
+        anh3 = crop_image_case3(frame, max_a, min_b, 90)
+        anh4 = crop_image_case4(frame, min_a, min_b, 90)
 
-        # Trích xuất giá trị phổ từ vùng trắng
-        spectral_values = anh[vung_trang]
-        # print("Giá trị phổ của vùng trắng: ", spectral_values)
+        final1 = led1(anh1)
+        final2 = led2(anh2)
+        final3 = led3(anh3)
+        final4 = led4(anh4)
 
-        # Chuyển đổi spectral_values thành một con số ngưỡng (ví dụ: trung bình)
-        threshold_value = np.mean(spectral_values)
-        # print("Ngưỡng: ", threshold_value)
+        cv2.imshow("Anh Goc", anh_xam)
+        cv2.imshow("Anh 2", anh_tron)
+        # cv2.imshow("LED 1", anh1)
+        # cv2.imshow("LED 2", anh2)
+        # cv2.imshow("LED 3", anh3)
+        # cv2.imshow("LED 4", anh4)
+        cv2.imshow("final1", final1)
+        cv2.imshow("final2", final2)
+        cv2.imshow("final3", final3)
+        cv2.imshow("final4", final4)
 
-        # Tạo một ảnh có cùng kích thước với ảnh gốc để hiển thị vùng trắng
-        vung_trang_image = np.zeros_like(anh)
-        # ADD màu xanh lá cây phân biệt vùng trắng => Đảm bảo xác định đúng
-        vung_trang_image[vung_trang] = (0, 255, 0)
-        detect_and_draw_circles(vung_trang_image)
-        cv2.imshow("Anh Goc", anh)
-        cv2.imshow("Vung Trang", vung_trang_image)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if save_images:
+            cv2.imwrite(f"anh1_{frame_count}.jpg", anh1)
+            cv2.imwrite(f"anh2_{frame_count}.jpg", anh2)
+            cv2.imwrite(f"anh3_{frame_count}.jpg", anh3)
+            cv2.imwrite(f"anh4_{frame_count}.jpg", anh4)
+            frame_count += 1
+            save_images = False
+
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
             break
+        elif key == ord('s'):
+            save_images = True
 
     video.release()
     cv2.destroyAllWindows()

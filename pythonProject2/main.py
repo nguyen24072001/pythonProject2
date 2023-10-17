@@ -19,7 +19,7 @@ def main():
         # cv2.rectangle(frame, top_left, bottom_right, (0, 255, 0), 2)
         cropped_frame = frame[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
         #
-        cv2.imshow("Camera Test", cropped_frame)
+        cv2.imshow("Camera Test", frame)
         # cv2.imshow("Camera Test", frame)
         if cv2.waitKey(1) == ord('q'):
             break

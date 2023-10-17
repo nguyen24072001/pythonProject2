@@ -1,46 +1,44 @@
-# import argparse
 import cv2
 import numpy as np
 
 
-def anh_histogram(image):
-    # Chuyển đổi ảnh sang ảnh grayscale
-    anh_xam = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-    # Cân bằng lược đồ màu
-    anh_can_bang = cv2.equalizeHist(anh_xam)
-
-    # Chuyển đổi ảnh xám thành ảnh màu
-    anh_can_bang_mau = cv2.cvtColor(anh_can_bang, cv2.COLOR_GRAY2BGR)
-
-    # Tìm giá trị tối đa và tối thiểu trong ảnh cân bằng
-    gia_tri_toi_thieu, gia_tri_toi_da, _, _ = cv2.minMaxLoc(anh_can_bang)
-
-    # Đặt ngưỡng để lọc các pixel có độ tương phản cao hơn ngưỡng
-    nguong = gia_tri_toi_da * 0.96655
-
-    # Cắt ảnh theo phần có độ tương phản tương đối cao
-    anh_cai_tien_tuong_phan = anh_can_bang_mau.copy()
-    anh_cai_tien_tuong_phan[anh_can_bang_mau < nguong] = 0
-
-    return anh_cai_tien_tuong_phan
 def circle_detection(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30, maxRadius=40)
+    detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
+                                        maxRadius=40)
+
     if detected_circles is not None:
         detected_circles = np.uint16(np.around(detected_circles))
+
         for pt in detected_circles[0, :]:
             a, b, r = pt[0], pt[1], pt[2]
-            # cv2.circle(img, (a, b), r, (0, 0, 255), 2)
+            center = (a, b)
+
+            # Hiển thị tọa độ tâm
+            text = "({}, {})".format(a, b)
+            cv2.putText(img, text, (a, b), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            # Vẽ chấm xanh dương
+            cv2.circle(img, center, 2, (255, 0, 0), -1)
+
+            # Vẽ hình vuông
+            square_length = 40
+            x1 = a - square_length // 2
+            y1 = b - square_length // 2
+            x2 = a + square_length // 2
+            y2 = b + square_length // 2
+            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 1)
+
+            # Nguong
             img, point = calculator_color(img, gray, a, b, r)
-            print("a =", a, "b = ", b, "point", point)
+            print("a =", a, "b =", b, "point =", point)
 
     return img
 
 
 def calculator_color(img, gray, a, b, r):
     points = []
-    for r in range(r - 3, r , 1):
+    for r in range(r - 3, r, 1):
         for x in range(a - r, a + r, 1):
             y = int(-(r ** 2 - (x - a) ** 2) ** 0.5 + b)
             points.append(gray[y, x])
@@ -51,19 +49,7 @@ def calculator_color(img, gray, a, b, r):
             points.append(gray[y, x])
             cv2.rectangle(img, (x, y), (x, y), (0, 0, 255), 1)
 
-
     return img, int(sum(points)/len(points))
-
-def xac_dinh_vung_trang(anh):
-    # Chuyển đổi ảnh sang ảnh grayscale
-    anh_xam = cv2.cvtColor(anh, cv2.COLOR_BGR2GRAY)
-
-    # Áp dụng phép toán nhị phân hóa để chuyển đổi ảnh sang dạng nhị phân
-    _, anh_nhi_phan = cv2.threshold(anh_xam, 0, 255, cv2.THRESH_BINARY)
-
-    # Tìm các vị trí có giá trị pixel là màu trắng
-    vung_trang = np.where(anh_nhi_phan == 255)
-    return vung_trang
 
 
 led_text = ""
@@ -145,8 +131,8 @@ def detect_and_draw_circles(image):
 
 def main():
 
-    # video = cv2.VideoCapture("CASE_BLINK_LED1.mp4")
-    video = cv2.VideoCapture(2)
+    # video = cv2.VideoCapture("demo_gray.mp4")
+    video = cv2.VideoCapture("anh1_0.jpg")
     if not video.isOpened():
         print("Failed to open the video file.")
         return
@@ -159,20 +145,8 @@ def main():
         if not ret:
             break
 
-
         anh_xam = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        anh2 = anh_xam
-        # anh_cai_tien = anh_histogram(anh)
 
-        # vung_trang = xac_dinh_vung_trang(anh_cai_tien)
-        # print("Thông số vùng trắng: ", vung_trang)
-
-        # Trích xuất giá trị phổ từ vùng trắng
-        # spectral_values = anh[vung_trang]
-        # print("Giá trị phổ của vùng trắng: ", spectral_values)
-
-        # Chu
-        # detect_and_draw_circles(vung_trang_image)
         anh_tron = circle_detection(frame)
         cv2.imshow("Anh Goc", anh_xam)
         cv2.imshow("Anh 2", anh_tron)
