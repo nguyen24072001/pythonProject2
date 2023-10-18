@@ -132,7 +132,7 @@ def detect_and_draw_circles(image):
 def main():
 
     # video = cv2.VideoCapture("demo_gray.mp4")
-    video = cv2.VideoCapture("anh1_0.jpg")
+    video = cv2.VideoCapture(2)
     if not video.isOpened():
         print("Failed to open the video file.")
         return

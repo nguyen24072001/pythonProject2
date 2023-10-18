@@ -3,18 +3,47 @@ import numpy as np
 
 
 def led1(img):
+    # img = cv2.GaussianBlur(img, (5, 5), 0)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
                                         maxRadius=40)
-
+    # img = cv2.GaussianBlur(img, (5, 5), 0)
+    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    point_list = []
+    sum_list = []
     if detected_circles is not None:
         detected_circles = np.uint16(np.around(detected_circles))
 
         for pt in detected_circles[0, :]:
             a, b, r = pt[0], pt[1], pt[2]
-
+            # img = cv2.GaussianBlur(img, (5, 5), 0)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # histogram
             img, point = calculator_color(img, gray, a, b, r)
-            print("point 1 =", point)
+
+            point_list.append(point)  # Add point
+            if len(point_list) > 100:
+                point_list = point_list[-100:]  # SUM = 20
+            average = sum(point_list) / len(point_list) if len(point_list) > 0 else 0
+
+            # print("Average =", average)
+            # Display point
+            text = f"{average}"
+            cv2.putText(img, "1|", (a-40, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+
+            cv2.putText(img, text, (a-12, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+            if average > 230:
+
+                cv2.putText(img, "ON", (25, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            elif 170 < average < 230:
+
+                cv2.putText(img, "OFF", (40, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            elif average < 170:
+
+                cv2.putText(img, "Z", (40, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+
+            # print("point 1 =", point)
 
     return img
 
@@ -23,7 +52,7 @@ def led2(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
                                         maxRadius=40)
-
+    point_list = []
     if detected_circles is not None:
         detected_circles = np.uint16(np.around(detected_circles))
 
@@ -31,6 +60,25 @@ def led2(img):
             a, b, r = pt[0], pt[1], pt[2]
 
             img, point = calculator_color(img, gray, a, b, r)
+            point_list.append(point)  # Add point
+            if len(point_list) > 100:
+                point_list = point_list[-100:]  # SUM = 20
+            average = sum(point_list) / len(point_list) if len(point_list) > 0 else 0
+
+            # print("Average 2 =", average)
+            # Display point
+            text = f"{average}"
+            cv2.putText(img, "2|", (a - 40, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+
+            cv2.putText(img, text, (a - 12, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+            if average > 230:
+                cv2.putText(img, "ON", (25, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            elif 180 < average < 230:
+                cv2.putText(img, "OFF", (40, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            elif average < 190:
+                cv2.putText(img, "Z", (40, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+
             print("point 2 =", point)
 
     return img
@@ -40,7 +88,7 @@ def led3(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
                                         maxRadius=40)
-
+    point_list = []
     if detected_circles is not None:
         detected_circles = np.uint16(np.around(detected_circles))
 
@@ -48,7 +96,26 @@ def led3(img):
             a, b, r = pt[0], pt[1], pt[2]
 
             img, point = calculator_color(img, gray, a, b, r)
-            print("point 3 =", point)
+            point_list.append(point)  # Add point
+            if len(point_list) > 100:
+                point_list = point_list[-100:]  # SUM = 20
+            average = sum(point_list) / len(point_list) if len(point_list) > 0 else 0
+
+            # print("Average =", average)
+            # Display point
+            text = f"{average}"
+            cv2.putText(img, "3|", (a - 40, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+
+            cv2.putText(img, text, (a - 12, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+            if average > 230:
+                cv2.putText(img, "ON", (25, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            elif 180 < average < 230:
+                cv2.putText(img, "OFF", (40, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            elif average < 190:
+                cv2.putText(img, "Z", (40, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+
+            # print("point 3 =", point)
 
     return img
 
@@ -57,7 +124,7 @@ def led4(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=30,
                                         maxRadius=40)
-
+    point_list = []
     if detected_circles is not None:
         detected_circles = np.uint16(np.around(detected_circles))
 
@@ -65,7 +132,26 @@ def led4(img):
             a, b, r = pt[0], pt[1], pt[2]
 
             img, point = calculator_color(img, gray, a, b, r)
-            print("point 4 =", point)
+            point_list.append(point)  # Add point
+            if len(point_list) > 100:
+                point_list = point_list[-100:]  # SUM = 20
+            average = sum(point_list) / len(point_list) if len(point_list) > 0 else 0
+
+            # print("Average =", average)
+            # Display point
+            text = f"{average}"
+            cv2.putText(img, "4|", (a - 42, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+
+            cv2.putText(img, text, (a - 14, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+
+            if average > 225:
+                cv2.putText(img, "ON", (25, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            elif 180 < average < 225:
+                cv2.putText(img, "OFF", (40, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+            elif average < 190:
+                cv2.putText(img, "Z", (40, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 165, 255), 2)
+
+            # print("point 4 =", point)
 
     return img
 
@@ -141,13 +227,13 @@ max_b = float('-inf')  # Initialize max_b with negative infinity
 def save_center_values(a, b):
     global min_a, min_b, max_a, max_b
 
-    # Update the minimum values if necessary
+    # Update the minimum values
     if a < min_a:
         min_a = a
     if b < min_b:
         min_b = b
 
-    # Update the maximum values if necessary
+    # Update the maximum values
     if a > max_a:
         max_a = a
     if b > max_b:
@@ -171,7 +257,8 @@ def calculator_color(img, gray, a, b, r):
 
 
 def main():
-    video = cv2.VideoCapture("demo_gray.mp4")
+    # video = cv2.VideoCapture("demo_gray.mp4")
+    video = cv2.VideoCapture(2)
     if not video.isOpened():
         print("Failed to open the video file.")
         return
@@ -184,14 +271,17 @@ def main():
 
         if not ret:
             break
-
+        # frame = cv2.GaussianBlur(frame, (9, 9), 0)
+        frame = cv2.blur(frame,(5, 5))
         anh_xam = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         anh_tron = circle_detection(frame)
 
-        anh1 = crop_image_case1(frame, max_a, max_b, 90)
-        anh2 = crop_image_case2(frame, min_a, max_b, 90)
-        anh3 = crop_image_case3(frame, max_a, min_b, 90)
-        anh4 = crop_image_case4(frame, min_a, min_b, 90)
+        anh1 = crop_image_case1(frame, max_a, max_b, 97)
+        anh2 = crop_image_case2(frame, min_a, max_b, 97)
+        anh3 = crop_image_case3(frame, max_a, min_b, 97)
+        anh4 = crop_image_case4(frame, min_a, min_b, 97)
+
+
 
         final1 = led1(anh1)
         final2 = led2(anh2)
@@ -204,16 +294,16 @@ def main():
         # cv2.imshow("LED 2", anh2)
         # cv2.imshow("LED 3", anh3)
         # cv2.imshow("LED 4", anh4)
-        cv2.imshow("final1", final1)
-        cv2.imshow("final2", final2)
-        cv2.imshow("final3", final3)
-        cv2.imshow("final4", final4)
-
+        # cv2.imshow("final1", final1)
+        # cv2.imshow("final2", final2)
+        # cv2.imshow("final3", final3)
+        # cv2.imshow("final4", final4)
+        # cv2.imshow("test", anhhis)
         if save_images:
-            cv2.imwrite(f"anh1_{frame_count}.jpg", anh1)
-            cv2.imwrite(f"anh2_{frame_count}.jpg", anh2)
-            cv2.imwrite(f"anh3_{frame_count}.jpg", anh3)
-            cv2.imwrite(f"anh4_{frame_count}.jpg", anh4)
+            cv2.imwrite(f"anh1_on_{frame_count}.jpg", anh1)
+            cv2.imwrite(f"anh2_on_{frame_count}.jpg", anh2)
+            cv2.imwrite(f"anh3_on_{frame_count}.jpg", anh3)
+            cv2.imwrite(f"anh4_on_{frame_count}.jpg", anh4)
             frame_count += 1
             save_images = False
 

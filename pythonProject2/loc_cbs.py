@@ -37,6 +37,7 @@ def xac_dinh_vung_trang(anh):
     vung_trang = np.where(anh_nhi_phan == 255)
     return vung_trang
 
+
 def circle_detection(img):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     detected_circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150, param1=50, param2=30, minRadius=1, maxRadius=200)
@@ -45,14 +46,14 @@ def circle_detection(img):
         for pt in detected_circles[0, :]:
             a, b, r = pt[0], pt[1], pt[2]
             img, point = calculator_color(img, gray, a, b, r)
-            print(point)
+            print("SUM", point)
 
     return img
 
 
 def calculator_color(img, gray, a, b, r):
     points = []
-    for r in range(r - 3, r + 3, 1):
+    for r in range(r - 8, r - 3, 1):
         for x in range(a - r, a + r, 1):
             y = int(-(r ** 2 - (x - a) ** 2) ** 0.5 + b)
             points.append(gray[y, x])
@@ -85,23 +86,15 @@ def main():
         anh_cai_tien = anh_histogram(anh)
 
         vung_trang = xac_dinh_vung_trang(anh_cai_tien)
-        print("Thông số vùng trắng: ", vung_trang)
+        # print("Thông số vùng trắng: ", vung_trang)
 
         # Trích xuất giá trị phổ từ vùng trắng
         spectral_values = anh[vung_trang]
-        print("Giá trị phổ của vùng trắng: ", spectral_values)
+        # print("Giá trị phổ của vùng trắng: ", spectral_values)
 
         # Chuyển đổi spectral_values thành một con số ngưỡng (ví dụ: trung bình)
         threshold_value = np.mean(spectral_values)
-        print("Ngưỡng: ", threshold_value)
 
-        # Đèn sáng nếu ngưỡng ảnh LED_ON nằm trong khoảng 0.1 đơn vị
-        if abs(threshold_value - 228.16) < 0.1:
-            print("Đèn sáng")
-
-        # Đèn tắt nếu ngưỡng ảnh LED_OFF nằm trong khoảng 0.1 đơn vị
-        if abs(threshold_value - 177.78) < 0.1:
-            print("Đèn tắt")
 
         # Tạo một ảnh có cùng kích thước với ảnh gốc để hiển thị vùng trắng
         vung_trang_image = np.zeros_like(anh)
