@@ -7,9 +7,12 @@ def main():
 
     while True:
         ret, frame = camera.read()
+
         if not ret:
             print("Failed to capture frame")
             break
+
+        contrast_img = cv2.addWeighted(frame, 1.7, cv2.medianBlur(frame, 9), -0.5, 0)
         # Thiết lập kích thước hình vuông
         x = 300  # Chiều dài hình vuông
         y = 300  # Chiều rộng hình vuông
@@ -20,6 +23,8 @@ def main():
         cropped_frame = frame[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
         #
         cv2.imshow("Camera Test", frame)
+
+        cv2.imshow("3", contrast_img)
         # cv2.imshow("Camera Test", frame)
         if cv2.waitKey(1) == ord('q'):
             break

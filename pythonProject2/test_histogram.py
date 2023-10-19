@@ -1,17 +1,59 @@
 import cv2
-import numpy as np
-from matplotlib import pyplot as plt
+import os
+import matplotlib.pyplot as plt
 
-# reading the input image
+os.environ['QT_QPA_PLATFORM'] = 'wayland'
+
+# Read the images
 img = cv2.imread('anh1_0.jpg')
 img2 = cv2.imread('anh1_on_0.jpg')
+img3 = cv2.imread('anh4_off_34.jpg')
 
-# computing the histogram of the blue channel of the image
-hist1 = cv2.calcHist([img], [0], None, [256], [0, 256])
-hist2 = cv2.calcHist([img], [0], None, [256], [0, 256])
+# Convert the images to grayscale
+gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+gray_img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+gray_img3 = cv2.cvtColor(img3, cv2.COLOR_BGR2GRAY)
 
-# plot the above computed histogram
-plt.plot(hist1, color='b')
-plt.plot(hist2, color='g')
-plt.title('Image Histogram For Blue Channel GFG')
+# Calculate the histograms
+hist_img = cv2.calcHist([gray_img], [0], None, [256], [0, 256])
+hist_img2 = cv2.calcHist([gray_img2], [0], None, [256], [0, 256])
+hist_img3 = cv2.calcHist([gray_img3], [0], None, [256], [0, 256])
+
+# Plot the images and histograms
+plt.figure(figsize=(10, 10))
+
+plt.subplot(3, 2, 1)
+plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+plt.title('OFF')
+plt.axis('off')
+
+plt.subplot(3, 2, 2)
+plt.imshow(cv2.cvtColor(img2, cv2.COLOR_BGR2RGB))
+plt.title('ON/ON')
+plt.axis('off')
+
+plt.subplot(3, 2, 3)
+plt.imshow(cv2.cvtColor(img3, cv2.COLOR_BGR2RGB))
+plt.title('ON/OFF')
+plt.axis('off')
+
+plt.subplot(3, 2, 4)
+plt.plot(hist_img, color='black')
+plt.title('Histogram of Image 1')
+plt.xlabel('Pixel Value')
+plt.ylabel('Frequency')
+
+plt.subplot(3, 2, 5)
+plt.plot(hist_img2, color='black')
+plt.title('Histogram of Image 2')
+plt.xlabel('Pixel Value')
+plt.ylabel('Frequency')
+
+plt.subplot(3, 2, 6)
+plt.plot(hist_img3, color='black')
+plt.title('Histogram of Image 3')
+plt.xlabel('Pixel Value')
+plt.ylabel('Frequency')
+
+plt.tight_layout()
 plt.show()
