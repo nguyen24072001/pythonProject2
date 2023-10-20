@@ -39,19 +39,19 @@ plt.axis('off')
 
 plt.subplot(3, 2, 4)
 plt.plot(hist_img, color='black')
-plt.title('Histogram of Image 1')
+plt.title('OFF')
 plt.xlabel('Pixel Value')
 plt.ylabel('Frequency')
 
 plt.subplot(3, 2, 5)
 plt.plot(hist_img2, color='black')
-plt.title('Histogram of Image 2')
+plt.title('ON/ON')
 plt.xlabel('Pixel Value')
 plt.ylabel('Frequency')
 
 plt.subplot(3, 2, 6)
 plt.plot(hist_img3, color='black')
-plt.title('Histogram of Image 3')
+plt.title('ON/OFF')
 plt.xlabel('Pixel Value')
 plt.ylabel('Frequency')
 
