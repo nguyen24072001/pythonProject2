@@ -12,7 +12,7 @@ def main():
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter('CASE_CO_SANG.mp4', fourcc, fps, (width, height))
+    out = cv2.VideoWriter('CASE_4blink.mp4', fourcc, fps, (width, height))
 
     while True:
         ret, frame = camera.read()

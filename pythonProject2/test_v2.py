@@ -282,8 +282,8 @@ def calculator_color(img, gray, a, b, r):
 
 
 def main():
-    # video = cv2.VideoCapture("demo_gray.mp4")
-    video = cv2.VideoCapture(2)
+    video = cv2.VideoCapture("demo_gray.mp4")
+    # video = cv2.VideoCapture(2)
     if not video.isOpened():
         print("Failed to open the video file.")
         return
