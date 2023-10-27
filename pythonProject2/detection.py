@@ -5,8 +5,8 @@ import sys
 import os
 import logging
 
-# CAMERA = 2
-CAMERA = "CASE_4blink.mp4"
+CAMERA = 2
+# CAMERA = "CASE_4blink.mp4"
 R_MIN = 35
 R_MAX = 40
 DISTANCE_SWITCH = 100
@@ -108,7 +108,11 @@ def detect_switch(switch_list, camera, num_switch):
             for pt in detected_circles[0, :]:
                 a, b, r = pt[0], pt[1], pt[2]
                 switch_list = add_switch(switch_list, (a, b, r))
-
+        print(switch_list)
+        # cv2.imshow("Test Led", _gray)
+        # key = cv2.waitKey(1) & 0xFF
+        # if key == ord('q'):
+          #   break
     return switch_list
 
 
@@ -148,6 +152,7 @@ if __name__ == "__main__":
     delta_thresh = list()
 
     switch_pos = detect_switch(switch_pos, video, NUM_SWITCH)
+    print(switch_pos)
     thresh_level, delta_thresh = detect_thresh(thresh_level, delta_thresh, video)
     start_time = time.time()
     while True:
