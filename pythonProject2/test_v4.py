@@ -9,11 +9,13 @@ from time import sleep
 import paho.mqtt.client as mqtt
 from paho.mqtt import publish
 
+from blink_test import add_status, add_color, _calculator_blink, clean_blink, get1
+
 R_MIN = 35
 R_MAX = 40
 DISTANCE_SWITCH = 100
 DISTANCE_THRESH = 18
-DELAY = 0.5
+DELAY = 0.4
 
 MQTT_SERVER = "localhost"
 MQTT_PORT = 1883
@@ -27,10 +29,31 @@ led2 = ""
 led3 = ""
 led4 = ""
 
-sum_blink1 = ""
-sum_blink2 = ""
-sum_blink3 = ""
-sum_blink4 = ""
+sum_blink1 = 0
+sum_blink2 = 0
+sum_blink3 = 0
+sum_blink4 = 0
+
+ketqua1 = []
+ketqua2 = []
+ketqua3 = []
+ketqua4 = []
+
+color1 = ""
+color2 = ""
+color3 = ""
+color4 = ""
+
+cmd = ""
+event = ""
+
+clear1 = 0
+
+
+def ketqua():
+    global ketqua1
+    print("ok1", ketqua1)
+    ketqua1 = []
 
 
 def on_connect(client, userdata, flags, rc):
@@ -41,25 +64,38 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, msg):
+    global cmd, event, ketqua1, clear1
     host_data = {
         "switch": 0,
-        "cmd": "get",
-        "event": "blink"
+        "cmd": cmd,
+        "event": event
     }
-
     data = json.dumps(host_data)
-
+    if msg.topic == test and msg.payload == b'start':
+        cmd = "start"
     if msg.topic == test and msg.payload == b'get':
-        publish.single(post, payload=data, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
+        cmd = "get"
+    if msg.topic == test and msg.payload == b'blink':
+        event = "blink"
+    if msg.topic == test and msg.payload == b'status':
+        event = "status"
+    if msg.topic == test and msg.payload == b'color':
+        event = "color"
+    print(data)
+    if msg.topic == post and msg.payload == b'test':
+        publish.single(get, payload=data, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
 
-    if msg.topic == post and json.loads(msg.payload) == host_data:
+    if msg.topic == post and msg.payload == b'clear':
+        clear()
+
+    if msg.topic == get and json.loads(msg.payload) == host_data:
         if host_data["cmd"] == "get":
             if host_data["event"] == "blink":
-                publish.single(get, payload=case_blink, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
+                publish.single(post, payload=case_blink, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
             elif host_data["event"] == "status":
-                publish.single(get, payload=case_status, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
-        elif host_data["cmd"] == "start":
-            clear()
+                publish.single(post, payload=case_status, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
+            elif host_data["event"] == "color":
+                publish.single(post, payload=case_color, hostname=MQTT_SERVER, port=MQTT_PORT, qos=1)
 
 
 client = mqtt.Client()
@@ -281,6 +317,9 @@ def detect_color(_img, _a, _b, _r):
     average_r = int(sum(r) / len(r))
     average_g = int(sum(g) / len(g))
     average_b = int(sum(b) / len(b))
+    # print("R=", average_r, "G=", average_g, "B=", average_b)
+    if average_r < 175 and average_g < 175 and average_b < 175:
+        return 3
     if average_r > average_g and average_r > average_b:
         return 0
     if average_g > average_r and average_g > average_b:
@@ -325,11 +364,7 @@ def get_status4():
 
 
 def clear():
-    global dem_am1, dem_am2, dem_am3, dem_am4
-    dem_am1 = 0
-    dem_am2 = 0
-    dem_am3 = 0
-    dem_am4 = 0
+    get1()
 
 
 if __name__ == "__main__":
@@ -338,10 +373,9 @@ if __name__ == "__main__":
         logging.error("Failed to open the video file.")
         sys.exit()
 
-    for temp2 in range(0, 100, 1):
-        ret, frame = video.read()
     switch_pos1 = detect_switch(video, 4)
     thresh_level, delta_thresh = detect_thresh(video, switch_pos1, 4)
+    time.sleep(2)
     start_time = time.time()
     while True:
         ret, frame = video.read()
@@ -362,8 +396,13 @@ if __name__ == "__main__":
             "switch": 0,
             "status": [led1, led2, led3, led4]
         }
+        color_data = {
+            "switch": 0,
+            "color": [color1, color2, color3, color4]
+        }
         case_blink = json.dumps(blink_data)
         case_status = json.dumps(status_data)
+        case_color = json.dumps(color_data)
 
         a_sum = 0
         b_sum = 0
@@ -380,76 +419,55 @@ if __name__ == "__main__":
             item = tuple(switch_pos1[i][:2])
             item1.append(item)
             if item1[i][0] > center[0] and item1[i][1] > center[1]:
+                color1 = detect_color(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
                 frame, point = average_and_draw_circle1(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
-                # color1 = detect_color(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
-                # frame = put_color_to_img(frame, switch_pos1[i], color1)
+                frame = put_color_to_img(frame, switch_pos1[i], color1)
                 led1 = detect_state(thresh_level, delta_thresh, point)
                 frame = put_state_to_img(frame, switch_pos1[i], detect_state(thresh_level, delta_thresh, point))
                 frame = put_number_to_img(frame, switch_pos1)
-                if previous_threshold_value1 is not None:
-                    threshold_diff1 = point - previous_threshold_value1
-                    if abs(threshold_diff1) <= base:
-                        pass
-                    elif delta_blink < abs(threshold_diff1):
-
-                        dem_am1 = dem_am1 + 1
-                previous_threshold_value1 = point
-
-                sum_blink1 = math.ceil((dem_am1 - 1) / 2)
+                # call blink_test.py
+                ketqua1 = add_status(0, detect_state(thresh_level, delta_thresh, point))
+                sum_blink1 = _calculator_blink(ketqua1)
                 cv2.putText(frame, f"{point}:{sum_blink1}:{led1}", (item1[i][0] - 50, item1[i][1] + 55),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             (255, 0, 0), 2)
             elif item1[i][0] < center[0] and item1[i][1] > center[1]:
+                color2 = detect_color(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
                 frame, point = average_and_draw_circle1(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
+                frame = put_color_to_img(frame, switch_pos1[i], color2)
                 led2 = detect_state(thresh_level, delta_thresh, point)
                 frame = put_state_to_img(frame, switch_pos1[i], detect_state(thresh_level, delta_thresh, point))
                 frame = put_number_to_img(frame, switch_pos1)
-                if previous_threshold_value2 is not None:
-                    threshold_diff2 = point - previous_threshold_value2
-                    if abs(threshold_diff2) <= base:
-                        pass
-                    elif delta_blink < abs(threshold_diff2):
+                # call blink_test.py
+                ketqua2 = add_status(1, detect_state(thresh_level, delta_thresh, point))
+                sum_blink2 = _calculator_blink(ketqua2)
 
-                        dem_am2 = dem_am2 + 1
-                previous_threshold_value2 = point
-
-                sum_blink2 = math.ceil((dem_am2 - 1) / 2)
                 cv2.putText(frame, f"{point}:{sum_blink2}:{led2}", (item1[i][0] - 50, item1[i][1] + 55),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             (255, 0, 0), 2)
             elif item1[i][0] > center[0] and item1[i][1] < center[1]:
+                color3 = detect_color(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
                 frame, point = average_and_draw_circle2(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
+                frame = put_color_to_img(frame, switch_pos1[i], color3)
                 led3 = detect_state(thresh_level, delta_thresh, point)
                 frame = put_state_to_img(frame, switch_pos1[i], detect_state(thresh_level, delta_thresh, point))
                 frame = put_number_to_img(frame, switch_pos1)
-                if previous_threshold_value3 is not None:
-                    threshold_diff3 = point - previous_threshold_value3
-                    if abs(threshold_diff3) <= base:
-                        pass
-                    elif delta_blink < abs(threshold_diff3):
-
-                        dem_am3 = dem_am3 + 1
-                previous_threshold_value3 = point
-
-                sum_blink3 = math.ceil((dem_am3 - 1) / 2)
+                # call blink_test.py
+                ketqua3 = add_status(2, detect_state(thresh_level, delta_thresh, point))
+                sum_blink3 = _calculator_blink(ketqua3)
                 cv2.putText(frame, f"{point}:{sum_blink3}:{led3}", (item1[i][0] - 50, item1[i][1] + 55),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             (255, 0, 0), 2)
             elif item1[i][0] < center[0] and item1[i][1] < center[1]:
+                color4 = detect_color(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
                 frame, point = average_and_draw_circle2(frame, item1[i][0], item1[i][1], switch_pos1[i][2])
+                frame = put_color_to_img(frame, switch_pos1[i], color4)
                 led4 = detect_state(thresh_level, delta_thresh, point)
                 frame = put_state_to_img(frame, switch_pos1[i], detect_state(thresh_level, delta_thresh, point))
                 frame = put_number_to_img(frame, switch_pos1)
-                if previous_threshold_value4 is not None:
-                    threshold_diff4 = point - previous_threshold_value4
-                    if abs(threshold_diff4) <= base:
-                        pass
-                    elif delta_blink < abs(threshold_diff4):
-
-                        dem_am4 = dem_am4 + 1
-                previous_threshold_value4 = point
-
-                sum_blink4 = math.ceil((dem_am4 - 1) / 2)
+                # call blink_test.py
+                ketqua4 = add_status(3, detect_state(thresh_level, delta_thresh, point))
+                sum_blink4 = _calculator_blink(ketqua4)
                 cv2.putText(frame, f"{point}:{sum_blink4}:{led4}", (item1[i][0] - 50, item1[i][1] + 55),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                             (255, 0, 0), 2)
